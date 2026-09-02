@@ -11,6 +11,7 @@
   --text:#3C3489;
   --sub:#8B85B0;
   --glow:#CECBF6;
+  --purple:#9B72FF;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
 body{
@@ -86,8 +87,14 @@ body{
   transition:transform .25s cubic-bezier(.34,1.56,.64,1);
 }
 .entry:active{transform:scale(.9)}
-.entry .icon{font-size:24px;color:var(--text);line-height:1}
+.entry .iconWrap{position:relative;line-height:1}
+.entry .icon{font-size:24px;color:var(--text)}
 .entry .label{font-size:12px;color:var(--sub)}
+.badge{
+  position:absolute;top:-5px;right:-9px;width:9px;height:9px;border-radius:50%;
+  transform:scale(0);transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+}
+.badge.show{transform:scale(1)}
 .tabbar{
   position:relative;display:flex;justify-content:space-around;
   padding:12px 30px 24px;z-index:2;
@@ -100,15 +107,113 @@ body{
   position:absolute;left:50%;bottom:110px;transform:translateX(-50%) translateY(8px);
   background:rgba(60,52,137,.88);color:#fff;font-size:12px;
   padding:8px 16px;border-radius:999px;white-space:nowrap;
-  opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:9;
+  opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:40;
 }
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* ── 底部弹层（还原 SwiftUI 的 .sheet + presentationDetents）── */
+.mask{
+  position:absolute;inset:0;background:rgba(42,37,71,.28);
+  opacity:0;pointer-events:none;transition:opacity .35s;z-index:19;
+}
+.mask.show{opacity:1;pointer-events:auto}
+.sheet{
+  position:absolute;left:0;right:0;bottom:0;z-index:20;
+  background:var(--bg);
+  border-radius:28px 28px 0 0;
+  padding:10px 28px 24px;
+  transform:translateY(105%);
+  transition:transform .45s cubic-bezier(.32,.72,.33,1);
+  display:flex;flex-direction:column;align-items:center;
+  max-height:88%;overflow-y:auto;
+}
+.sheet.show{transform:translateY(0)}
+.dragbar{width:38px;height:5px;border-radius:3px;background:var(--empty);margin-bottom:14px;flex:none}
+.sheet h2{font-size:24px;font-weight:500;color:var(--text)}
+.sheet .sub{font-size:13px;color:var(--sub);margin-top:6px}
+.sheetSpacer{flex:none;height:16px}
+.btnPrimary{
+  font-family:inherit;font-size:16px;font-weight:500;color:#fff;
+  background:var(--purple);border:none;border-radius:999px;
+  width:200px;height:50px;cursor:pointer;
+  transition:background .25s,transform .2s;
+}
+.btnPrimary:disabled{background:var(--empty);color:var(--sub);cursor:default}
+.btnPrimary:not(:disabled):active{transform:scale(.96)}
+.btnGhost{
+  font-family:inherit;font-size:14px;color:var(--sub);
+  background:var(--empty);border:none;border-radius:999px;
+  height:50px;padding:0 28px;cursor:pointer;
+  transition:transform .2s;
+}
+.btnGhost:disabled{opacity:.55;cursor:default}
+.btnGhost:not(:disabled):active{transform:scale(.96)}
+.btnRow{display:flex;gap:14px;margin-top:6px}
+
+/* ── 心情弹层 ── */
+.moodPreview{display:flex;flex-direction:column;align-items:center;gap:10px;margin:6px 0}
+.mpixel{
+  width:64px;height:64px;border-radius:18px;background:var(--empty);
+  transition:background .4s,box-shadow .4s;
+}
+.mname{font-size:13px;color:var(--sub)}
+.moodGrid{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:20px 18px;
+  padding:0 6px;margin:8px 0 6px;
+}
+.moodDot{
+  width:44px;height:44px;border-radius:50%;cursor:pointer;margin:0 auto;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;
+}
+.moodDot.sel{transform:scale(1.16);box-shadow:0 4px 14px rgba(0,0,0,.22)}
+
+/* ── 涂鸦弹层 ── */
+.strokeRow{display:flex;gap:16px;margin:10px 0 12px}
+.strokeDot{
+  width:26px;height:26px;border-radius:50%;cursor:pointer;
+  transition:transform .3s cubic-bezier(.34,1.56,.64,1),box-shadow .3s;
+}
+.strokeDot.sel{transform:scale(1.22);box-shadow:0 3px 10px rgba(0,0,0,.25)}
+#doodleCanvas{
+  width:334px;height:300px;background:rgba(255,255,255,.7);
+  border-radius:24px;cursor:crosshair;touch-action:none;
+}
+
+/* ── 照片弹层 ── */
+.photoBox{
+  width:220px;height:220px;border-radius:28px;overflow:hidden;position:relative;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+  background:rgba(255,255,255,.6);margin:10px 0 6px;
+  transition:background .3s;
+}
+.photoBox .emptyIcon{font-size:38px;color:var(--empty);line-height:1}
+.photoBox .emptyText{font-size:13px;color:var(--sub)}
+.photoBox img{width:100%;height:100%;object-fit:cover;display:block}
+.photoChip{
+  position:absolute;right:-8px;bottom:-8px;width:52px;height:52px;border-radius:15px;
+  box-shadow:0 4px 14px rgba(0,0,0,.22);border:3px solid var(--bg);
+  transform:scale(0);transition:transform .4s cubic-bezier(.34,1.56,.64,1);
+}
+.photoChip.show{transform:scale(1)}
+
+/* ── 想一句弹层 ── */
+.noteWrap{
+  width:300px;background:rgba(255,255,255,.7);border-radius:24px;
+  padding:4px;margin:10px 0 4px;
+}
+#noteInput{
+  width:100%;min-height:130px;border:none;background:transparent;outline:none;resize:none;
+  font-family:inherit;font-size:17px;color:var(--text);padding:14px;
+  user-select:text;
+}
+#noteInput::placeholder{color:rgba(139,133,176,.7)}
+.counter{font-size:12px;color:var(--sub)}
 </style>
 </head>
 <body>
 <p class="caption">
   <b>像素光年 · 「此刻」页面交互演示</b><br>
-  点击中央像素 → 选一个颜色（有声音）→ 看它汇聚成今天
+  选颜色 → 试试点「心情 / 涂一下 / 拍一瞬 / 想一句」四个入口
 </p>
 <button class="soundToggle" id="soundToggle">♪ 声音：开</button>
 
@@ -131,10 +236,22 @@ body{
   <div class="bottomSection" id="bottomSection">
     <div class="colored">今天已经有颜色了 ✨</div>
     <div class="entries">
-      <button class="entry"><span class="icon">♡</span><span class="label">心情</span></button>
-      <button class="entry"><span class="icon">✎</span><span class="label">涂一下</span></button>
-      <button class="entry"><span class="icon">◉</span><span class="label">拍一瞬</span></button>
-      <button class="entry"><span class="icon">💭</span><span class="label">想一句</span></button>
+      <button class="entry" data-entry="mood">
+        <span class="iconWrap"><span class="icon">♡</span><span class="badge" id="badgeMood"></span></span>
+        <span class="label">心情</span>
+      </button>
+      <button class="entry" data-entry="doodle">
+        <span class="iconWrap"><span class="icon">✎</span><span class="badge" id="badgeDoodle"></span></span>
+        <span class="label">涂一下</span>
+      </button>
+      <button class="entry" data-entry="photo">
+        <span class="iconWrap"><span class="icon">◉</span><span class="badge" id="badgePhoto"></span></span>
+        <span class="label">拍一瞬</span>
+      </button>
+      <button class="entry" data-entry="note">
+        <span class="iconWrap"><span class="icon">💭</span><span class="badge" id="badgeNote"></span></span>
+        <span class="label">想一句</span>
+      </button>
     </div>
   </div>
 
@@ -151,6 +268,71 @@ body{
       <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor"/></svg>
       光年
     </div>
+  </div>
+
+  <!-- 弹层遮罩 -->
+  <div class="mask" id="mask"></div>
+
+  <!-- ♡ 心情 -->
+  <div class="sheet" id="sheetMood">
+    <div class="dragbar"></div>
+    <h2>今天的心情</h2>
+    <p class="sub">不用想太多，凭感觉点一个。</p>
+    <div class="sheetSpacer"></div>
+    <div class="moodPreview">
+      <div class="mpixel" id="moodPixel"></div>
+      <div class="mname" id="moodName">…</div>
+    </div>
+    <div class="moodGrid" id="moodGrid"></div>
+    <div class="sheetSpacer"></div>
+    <button class="btnPrimary" id="moodSave" disabled>就这样</button>
+  </div>
+
+  <!-- ✎ 涂一下 -->
+  <div class="sheet" id="sheetDoodle">
+    <div class="dragbar"></div>
+    <h2>涂一下</h2>
+    <p class="sub">不是画画，随便划两下就好。</p>
+    <div class="sheetSpacer"></div>
+    <div class="strokeRow" id="strokeRow"></div>
+    <canvas id="doodleCanvas" width="668" height="600"></canvas>
+    <div class="sheetSpacer"></div>
+    <div class="btnRow">
+      <button class="btnGhost" id="doodleClear" disabled>重来</button>
+      <button class="btnPrimary" id="doodleSave" disabled>存下来</button>
+    </div>
+  </div>
+
+  <!-- ◉ 拍一瞬 -->
+  <div class="sheet" id="sheetPhoto">
+    <div class="dragbar"></div>
+    <h2>拍一瞬</h2>
+    <p class="sub">选一张照片，把那一刻的颜色偷回来。</p>
+    <div class="sheetSpacer"></div>
+    <div class="photoBox" id="photoBox">
+      <span class="emptyIcon">◉</span>
+      <span class="emptyText">还没有照片</span>
+      <div class="photoChip" id="photoChip"></div>
+    </div>
+    <div class="sheetSpacer"></div>
+    <button class="btnGhost" id="photoPick">选一张照片</button>
+    <div class="sheetSpacer"></div>
+    <button class="btnPrimary" id="photoSave" disabled>就这个颜色</button>
+    <input type="file" id="photoInput" accept="image/*" hidden>
+  </div>
+
+  <!-- 💭 想一句 -->
+  <div class="sheet" id="sheetNote">
+    <div class="dragbar"></div>
+    <h2>想一句</h2>
+    <p class="sub">说给未来的自己，最多 50 字。</p>
+    <div class="sheetSpacer"></div>
+    <div class="noteWrap">
+      <textarea id="noteInput" maxlength="50" placeholder="今天闪过脑海里的那句话…"></textarea>
+    </div>
+    <div class="counter" id="noteCounter">0 / 50</div>
+    <div class="sheetSpacer"></div>
+    <button class="btnPrimary" id="noteSave" disabled>就这样</button>
   </div>
 
   <div class="toast" id="toast"></div>
@@ -171,16 +353,36 @@ const COLORS = [
 ];
 const ORBIT_RADIUS = 130;
 
+// 心情调色板：与 MoodSheetView.swift 的 palette 完全一致
+const MOOD_COLORS = [
+  { name:"红",   hex:"#FF6B6B" },
+  { name:"橙",   hex:"#FFA94D" },
+  { name:"黄",   hex:"#FFD93D" },
+  { name:"绿",   hex:"#6BCB77" },
+  { name:"蓝",   hex:"#4D96FF" },
+  { name:"紫",   hex:"#9B72FF" },
+  { name:"粉",   hex:"#FF8FAB" },
+  { name:"玫瑰", hex:"#E0577E" },
+  { name:"青",   hex:"#2EC4B6" },
+  { name:"薄荷", hex:"#9BE8C8" },
+  { name:"蜜桃", hex:"#FFB4A2" },
+  { name:"深夜", hex:"#57548B" },
+];
+
 const pixel = document.getElementById("pixel");
 const hint = document.getElementById("hint");
 const belowText = document.getElementById("belowText");
 const bottomSection = document.getElementById("bottomSection");
 const toast = document.getElementById("toast");
+const mask = document.getElementById("mask");
 
 let isExpanded = false;
 let selectedColor = null;
 let blessingTimer = null;
 let soundOn = true;
+
+// 今天的四项附加记录（对应 DayRecord 的四个字段）
+const saved = { moodHex:null, doodleHex:null, photoHex:null, note:null };
 
 // ── 日期：和 App 一样取当前时间 ──
 const now = new Date();
@@ -284,16 +486,210 @@ function revealBlessing() {
   bottomSection.classList.add("show");
 }
 
-// ── 四个入口 & 其他 Tab：占位提示 ──
+// ── 通用：toast + 弹层开关 ──
 function showToast(msg) {
   toast.textContent = msg;
   toast.classList.add("show");
   clearTimeout(showToast._t);
   showToast._t = setTimeout(() => toast.classList.remove("show"), 1600);
 }
-document.querySelectorAll(".entry").forEach(btn => {
-  btn.addEventListener("click", () => showToast("这个功能在后面的里程碑解锁"));
+
+const sheets = { mood:"sheetMood", doodle:"sheetDoodle", photo:"sheetPhoto", note:"sheetNote" };
+let activeSheetKey = null;
+function openSheet(key) {
+  closeSheet();
+  activeSheetKey = key;
+  mask.classList.add("show");
+  document.getElementById(sheets[key]).classList.add("show");
+}
+function closeSheet() {
+  if (!activeSheetKey) return;
+  mask.classList.remove("show");
+  document.getElementById(sheets[activeSheetKey]).classList.remove("show");
+  activeSheetKey = null;
+}
+mask.addEventListener("click", closeSheet);
+
+// 入口小色点（对应 NowView 的 filledColor badge）
+function setBadge(id, color) {
+  const el = document.getElementById(id);
+  if (color) { el.style.background = color; el.classList.add("show"); }
+  else el.classList.remove("show");
+}
+
+// ══════════════ ♡ 心情 ══════════════
+let moodSelected = null;
+const moodGrid = document.getElementById("moodGrid");
+MOOD_COLORS.forEach(m => {
+  const el = document.createElement("div");
+  el.className = "moodDot";
+  el.style.background = m.hex;
+  el.addEventListener("click", () => selectMood(m.hex));
+  moodGrid.appendChild(el);
 });
+function selectMood(hex) {
+  moodSelected = hex;
+  document.querySelectorAll(".moodDot").forEach((el, i) => {
+    el.classList.toggle("sel", MOOD_COLORS[i].hex === hex);
+  });
+  document.getElementById("moodPixel").style.background = hex;
+  document.getElementById("moodPixel").style.boxShadow = `0 6px 20px ${hex}59`;
+  document.getElementById("moodName").textContent =
+    (MOOD_COLORS.find(m => m.hex === hex) || {}).name || "…";
+  document.getElementById("moodSave").disabled = false;
+}
+document.getElementById("moodSave").addEventListener("click", () => {
+  saved.moodHex = moodSelected;
+  setBadge("badgeMood", moodSelected);
+  closeSheet();
+  showToast("心情被记住了 ♡");
+});
+
+// ══════════════ ✎ 涂一下 ══════════════
+const doodleCanvas = document.getElementById("doodleCanvas");
+const dctx = doodleCanvas.getContext("2d");
+dctx.scale(2, 2);   // 2x 清晰度（对应 ImageRenderer scale: 2）
+dctx.lineCap = "round";
+dctx.lineJoin = "round";
+let strokeColor = COLORS[5].hex;  // 默认紫色，和 Swift 版一致
+let strokes = [];                 // 已完成的笔 [{points, color}]
+let currentStroke = null;         // 正在画的这一笔
+
+// 笔的颜色选择器（6 个基础色）
+const strokeRow = document.getElementById("strokeRow");
+COLORS.forEach(c => {
+  const el = document.createElement("div");
+  el.className = "strokeDot" + (c.hex === strokeColor ? " sel" : "");
+  el.style.background = c.hex;
+  el.addEventListener("click", () => {
+    strokeColor = c.hex;
+    document.querySelectorAll(".strokeDot").forEach(d => d.classList.remove("sel"));
+    el.classList.add("sel");
+  });
+  strokeRow.appendChild(el);
+});
+
+function redrawDoodle() {
+  dctx.clearRect(0, 0, 334, 300);
+  const all = currentStroke ? strokes.concat([currentStroke]) : strokes;
+  all.forEach(s => {
+    if (s.points.length < 2) return;
+    dctx.strokeStyle = s.color;
+    dctx.lineWidth = 6;
+    dctx.beginPath();
+    dctx.moveTo(s.points[0].x, s.points[0].y);
+    s.points.slice(1).forEach(p => dctx.lineTo(p.x, p.y));
+    dctx.stroke();
+  });
+  document.getElementById("doodleClear").disabled = strokes.length === 0;
+  document.getElementById("doodleSave").disabled = strokes.length === 0;
+}
+function doodlePoint(e) {
+  const rect = doodleCanvas.getBoundingClientRect();
+  return { x: e.clientX - rect.left, y: e.clientY - rect.top };
+}
+doodleCanvas.addEventListener("pointerdown", e => {
+  e.preventDefault();
+  doodleCanvas.setPointerCapture(e.pointerId);
+  currentStroke = { points: [doodlePoint(e)], color: strokeColor };
+  redrawDoodle();
+});
+doodleCanvas.addEventListener("pointermove", e => {
+  if (!currentStroke) return;
+  currentStroke.points.push(doodlePoint(e));
+  redrawDoodle();
+});
+["pointerup", "pointercancel"].forEach(ev =>
+  doodleCanvas.addEventListener(ev, () => {
+    if (currentStroke && currentStroke.points.length > 1) strokes.push(currentStroke);
+    currentStroke = null;
+    redrawDoodle();
+  })
+);
+document.getElementById("doodleClear").addEventListener("click", () => {
+  strokes = [];
+  redrawDoodle();
+});
+document.getElementById("doodleSave").addEventListener("click", () => {
+  saved.doodleHex = strokeColor;
+  setBadge("badgeDoodle", strokeColor);
+  closeSheet();
+  showToast("涂鸦存好了 ✎");
+});
+
+// ══════════════ ◉ 拍一瞬 ══════════════
+const photoInput = document.getElementById("photoInput");
+const photoBox = document.getElementById("photoBox");
+const photoChip = document.getElementById("photoChip");
+let photoHex = null;
+
+document.getElementById("photoPick").addEventListener("click", () => photoInput.click());
+photoInput.addEventListener("change", () => {
+  const file = photoInput.files && photoInput.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = () => {
+    const img = new Image();
+    img.onload = () => {
+      // 平均色：把图缩小到 50×50 再取平均（对应 CIAreaAverage）
+      const c = document.createElement("canvas");
+      c.width = 50; c.height = 50;
+      const cx = c.getContext("2d");
+      cx.drawImage(img, 0, 0, 50, 50);
+      const data = cx.getImageData(0, 0, 50, 50).data;
+      let r = 0, g = 0, b = 0;
+      for (let i = 0; i < data.length; i += 4) { r += data[i]; g += data[i+1]; b += data[i+2]; }
+      const n = data.length / 4;
+      r = Math.round(r / n); g = Math.round(g / n); b = Math.round(b / n);
+      photoHex = "#" + [r, g, b].map(v => v.toString(16).padStart(2, "0")).join("").toUpperCase();
+
+      // 展示照片 + 主色像素
+      photoBox.innerHTML = "";
+      const el = document.createElement("img");
+      el.src = reader.result;
+      photoBox.appendChild(el);
+      photoBox.appendChild(photoChip);
+      photoChip.style.background = photoHex;
+      photoChip.classList.add("show");
+      document.getElementById("photoSave").disabled = false;
+    };
+    img.src = reader.result;
+  };
+  reader.readAsDataURL(file);
+});
+document.getElementById("photoSave").addEventListener("click", () => {
+  saved.photoHex = photoHex;
+  setBadge("badgePhoto", photoHex);
+  closeSheet();
+  showToast("那一瞬的颜色偷回来了 ◉");
+});
+
+// ══════════════ 💭 想一句 ══════════════
+const noteInput = document.getElementById("noteInput");
+const noteCounter = document.getElementById("noteCounter");
+noteInput.addEventListener("input", () => {
+  // 超过 50 字：硬截断（和 Swift 版一致）
+  if (noteInput.value.length > 50) noteInput.value = noteInput.value.slice(0, 50);
+  noteCounter.textContent = noteInput.value.length + " / 50";
+  document.getElementById("noteSave").disabled = noteInput.value.trim() === "";
+});
+document.getElementById("noteSave").addEventListener("click", () => {
+  saved.note = noteInput.value.trim();
+  setBadge("badgeNote", "#3C3489");
+  closeSheet();
+  showToast("写好了，未来的你会看到的 💭");
+});
+
+// ── 四个入口：打开对应弹层 ──
+document.querySelectorAll(".entry").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const key = btn.dataset.entry;
+    if (key === "mood" && saved.moodHex) selectMood(saved.moodHex);  // 带出已存的
+    openSheet(key);
+  });
+});
+
+// ── 其他 Tab：占位提示 ──
 document.querySelectorAll(".tab[data-toast]").forEach(tab => {
   tab.addEventListener("click", () => showToast(tab.dataset.toast));
 });

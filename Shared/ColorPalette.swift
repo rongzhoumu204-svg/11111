@@ -53,4 +53,16 @@ enum PixelColor: Int, CaseIterable, Identifiable {
         guard let index else { return nil }
         return PixelColor(rawValue: index)
     }
+
+    // 十六进制字符串（如 "FF6B6B"），涂鸦等地方存库时用
+    var hexString: String {
+        switch self {
+        case .red:    return "FF6B6B"
+        case .orange: return "FFA94D"
+        case .yellow: return "FFD93D"
+        case .green:  return "6BCB77"
+        case .blue:   return "4D96FF"
+        case .purple: return "9B72FF"
+        }
+    }
 }

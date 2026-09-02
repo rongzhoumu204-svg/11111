@@ -29,4 +29,12 @@ extension Color {
             opacity: alpha
         )
     }
+
+    // 从数据库存的字符串（如 "FF6B6B"）还原颜色
+    // 心情、涂鸦、照片主色存的都是这种格式
+    init?(hexString: String) {
+        var value: UInt32 = 0
+        guard Scanner(string: hexString).scanHexUInt32(&value) else { return nil }
+        self.init(hex: value)
+    }
 }
