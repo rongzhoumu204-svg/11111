@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素光年 · 此刻页面演示</title>
+<style>
+:root{
+  --bg:#F8F5FE;
+  --empty:#E6E2F0;
+  --text:#3C3489;
+  --sub:#8B85B0;
+  --glow:#CECBF6;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+body{
+  background:#ECE7F6;
+  min-height:100vh;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  gap:14px;padding:18px;
+  font-family:ui-rounded,"SF Pro Rounded",-apple-system,"PingFang SC","Microsoft YaHei",sans-serif;
+}
+.caption{color:#5F5E5A;font-size:13px;text-align:center;line-height:1.7}
+.caption b{font-weight:500;color:#3C3489}
+.soundToggle{
+  font-family:inherit;font-size:12px;color:#3C3489;background:#fff;
+  border:0.5px solid #CECBF6;border-radius:999px;padding:5px 14px;cursor:pointer;
+}
+.soundToggle.off{color:#B4B2A9;border-color:#D3D1C7}
+#stageWrap{position:relative}
+.phone{
+  width:390px;height:844px;background:var(--bg);
+  border:10px solid #2A2547;border-radius:48px;overflow:hidden;
+  position:relative;display:flex;flex-direction:column;
+  box-shadow:0 24px 60px rgba(60,52,137,.20);
+  transform-origin:top center;
+}
+.phone::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:radial-gradient(circle at 50% 42%, rgba(206,203,246,.35), transparent 62%);
+}
+.header{position:relative;text-align:center;padding-top:64px;z-index:2}
+.header .appTitle{font-size:15px;color:var(--sub);letter-spacing:4px}
+.header .date{font-size:48px;font-weight:500;color:var(--text);margin-top:6px}
+.header .weekday{font-size:14px;color:var(--sub);margin-top:4px}
+.stage{position:relative;flex:1;z-index:2}
+.center{position:absolute;left:50%;top:46%;transform:translate(-50%,-50%)}
+.pixel{
+  width:96px;height:96px;border-radius:27px;background:var(--empty);
+  cursor:pointer;
+  transition:background .5s cubic-bezier(.3,.9,.4,1),
+             transform .45s cubic-bezier(.34,1.56,.64,1),
+             box-shadow .5s ease;
+}
+.pixel.expanded{transform:scale(1.12)}
+.hint{
+  position:absolute;top:92px;left:50%;transform:translateX(-50%);
+  font-size:13px;color:var(--sub);white-space:nowrap;
+  opacity:0;transition:opacity .35s;
+}
+.hint.show{opacity:1}
+.belowText{
+  position:absolute;top:138px;left:50%;transform:translateX(-50%);
+  font-size:16px;color:var(--sub);white-space:nowrap;
+  transition:opacity .4s;
+}
+.dot{
+  position:absolute;left:50%;top:50%;width:44px;height:44px;
+  margin:-22px 0 0 -22px;border-radius:50%;cursor:pointer;
+  transform:scale(.001);opacity:0;
+  transition:transform .5s cubic-bezier(.34,1.56,.64,1),opacity .3s ease;
+}
+.bottomSection{
+  position:relative;text-align:center;padding:0 24px 18px;z-index:2;
+  opacity:0;transform:translateY(14px);
+  transition:opacity .5s ease,transform .5s cubic-bezier(.3,.9,.4,1);
+  pointer-events:none;
+}
+.bottomSection.show{opacity:1;transform:translateY(0);pointer-events:auto}
+.bottomSection .colored{font-size:13px;color:var(--sub);margin-bottom:16px}
+.entries{display:flex;justify-content:center;gap:26px}
+.entry{
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  width:64px;height:64px;justify-content:center;cursor:pointer;
+  border:none;background:transparent;font-family:inherit;
+  transition:transform .25s cubic-bezier(.34,1.56,.64,1);
+}
+.entry:active{transform:scale(.9)}
+.entry .icon{font-size:24px;color:var(--text);line-height:1}
+.entry .label{font-size:12px;color:var(--sub)}
+.tabbar{
+  position:relative;display:flex;justify-content:space-around;
+  padding:12px 30px 24px;z-index:2;
+  border-top:0.5px solid rgba(60,52,137,.12);background:rgba(248,245,254,.9);
+}
+.tab{display:flex;flex-direction:column;align-items:center;gap:3px;font-size:10px;color:#B4B2A9;cursor:pointer}
+.tab.active{color:var(--text)}
+.tab svg{width:22px;height:22px}
+.toast{
+  position:absolute;left:50%;bottom:110px;transform:translateX(-50%) translateY(8px);
+  background:rgba(60,52,137,.88);color:#fff;font-size:12px;
+  padding:8px 16px;border-radius:999px;white-space:nowrap;
+  opacity:0;transition:opacity .3s,transform .3s;pointer-events:none;z-index:9;
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+</style>
+</head>
+<body>
+<p class="caption">
+  <b>像素光年 · 「此刻」页面交互演示</b><br>
+  点击中央像素 → 选一个颜色（有声音）→ 看它汇聚成今天
+</p>
+<button class="soundToggle" id="soundToggle">♪ 声音：开</button>
+
+<div id="stageWrap">
+<div class="phone" id="phone">
+  <div class="header">
+    <div class="appTitle">像素光年</div>
+    <div class="date" id="dateText">9.02</div>
+    <div class="weekday" id="weekdayText">星期三 · 今日像素</div>
+  </div>
+
+  <div class="stage">
+    <div class="center" id="center">
+      <div class="pixel" id="pixel"></div>
+      <div class="hint" id="hint">选一个</div>
+      <div class="belowText" id="belowText">今天是什么颜色呢？</div>
+    </div>
+  </div>
+
+  <div class="bottomSection" id="bottomSection">
+    <div class="colored">今天已经有颜色了 ✨</div>
+    <div class="entries">
+      <button class="entry"><span class="icon">♡</span><span class="label">心情</span></button>
+      <button class="entry"><span class="icon">✎</span><span class="label">涂一下</span></button>
+      <button class="entry"><span class="icon">◉</span><span class="label">拍一瞬</span></button>
+      <button class="entry"><span class="icon">💭</span><span class="label">想一句</span></button>
+    </div>
+  </div>
+
+  <div class="tabbar">
+    <div class="tab active">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="8" height="8" rx="2.5" fill="currentColor"/><rect x="13" y="3" width="8" height="8" rx="2.5" fill="currentColor" opacity=".3"/><rect x="3" y="13" width="8" height="8" rx="2.5" fill="currentColor" opacity=".3"/><rect x="13" y="13" width="8" height="8" rx="2.5" fill="currentColor" opacity=".3"/></svg>
+      此刻
+    </div>
+    <div class="tab" data-toast="「漫游」在里程碑 2 实现">
+      <svg viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="16" rx="3" stroke="currentColor" stroke-width="1.8"/><path d="M8 3v4M16 3v4M3 10h18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+      漫游
+    </div>
+    <div class="tab" data-toast="「光年」在里程碑 3 实现">
+      <svg viewBox="0 0 24 24" fill="none"><path d="M12 2l2.4 7.6L22 12l-7.6 2.4L12 22l-2.4-7.6L2 12l7.6-2.4z" fill="currentColor"/></svg>
+      光年
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+</div>
+
+<p class="caption">此演示还原 SwiftUI 代码的实际行为，供 Windows 上预览交互效果</p>
+
+<script>
+// ── 颜色数据：与 Shared/ColorPalette.swift 完全一致 ──
+const COLORS = [
+  { name:"红", hex:"#FF6B6B", note:"Do",  freq:261.63 },
+  { name:"橙", hex:"#FFA94D", note:"Re",  freq:293.66 },
+  { name:"黄", hex:"#FFD93D", note:"Mi",  freq:329.63 },
+  { name:"绿", hex:"#6BCB77", note:"Fa",  freq:349.23 },
+  { name:"蓝", hex:"#4D96FF", note:"Sol", freq:392.00 },
+  { name:"紫", hex:"#9B72FF", note:"La",  freq:440.00 },
+];
+const ORBIT_RADIUS = 130;
+
+const pixel = document.getElementById("pixel");
+const hint = document.getElementById("hint");
+const belowText = document.getElementById("belowText");
+const bottomSection = document.getElementById("bottomSection");
+const toast = document.getElementById("toast");
+
+let isExpanded = false;
+let selectedColor = null;
+let blessingTimer = null;
+let soundOn = true;
+
+// ── 日期：和 App 一样取当前时间 ──
+const now = new Date();
+document.getElementById("dateText").textContent =
+  (now.getMonth() + 1) + "." + String(now.getDate()).padStart(2, "0");
+document.getElementById("weekdayText").textContent =
+  new Intl.DateTimeFormat("zh-CN", { weekday: "long" }).format(now) + " · 今日像素";
+
+// ── 声音：每种颜色对应一个音高（还原 MelodyEngine 的设计）──
+let audioCtx = null;
+function playNote(freq) {
+  if (!soundOn) return;
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  const t = audioCtx.currentTime;
+  const osc = audioCtx.createOscillator();
+  const gain = audioCtx.createGain();
+  osc.type = "triangle";
+  osc.frequency.value = freq;
+  gain.gain.setValueAtTime(0, t);
+  gain.gain.linearRampToValueAtTime(0.25, t + 0.015);
+  gain.gain.exponentialRampToValueAtTime(0.001, t + 0.55);
+  osc.connect(gain).connect(audioCtx.destination);
+  osc.start(t);
+  osc.stop(t + 0.6);
+}
+
+document.getElementById("soundToggle").addEventListener("click", function () {
+  soundOn = !soundOn;
+  this.textContent = soundOn ? "♪ 声音：开" : "♪ 声音：关";
+  this.classList.toggle("off", !soundOn);
+});
+
+// ── 创建 6 个颜色圆点 ──
+const dots = COLORS.map((c, i) => {
+  const dot = document.createElement("div");
+  dot.className = "dot";
+  dot.style.background = c.hex;
+  dot.style.boxShadow = `0 4px 12px ${c.hex}66`;
+  dot.addEventListener("click", () => choose(i));
+  document.getElementById("center").appendChild(dot);
+  return dot;
+});
+
+function orbitOffset(i) {
+  const angle = (i / 6) * Math.PI * 2 - Math.PI / 2;
+  return { x: ORBIT_RADIUS * Math.cos(angle), y: ORBIT_RADIUS * Math.sin(angle) };
+}
+
+// ── 展开收起（对应 SwiftUI 的 isExpanded.toggle()）──
+pixel.addEventListener("click", () => {
+  isExpanded = !isExpanded;
+  pixel.classList.toggle("expanded", isExpanded);
+  hint.classList.toggle("show", isExpanded);
+  dots.forEach((dot, i) => {
+    if (isExpanded) {
+      const { x, y } = orbitOffset(i);
+      dot.style.transitionDelay = (i * 0.05) + "s";
+      dot.style.transform = `translate(${x}px, ${y}px) scale(1)`;
+      dot.style.opacity = "1";
+    } else {
+      dot.style.transitionDelay = "0s";
+      dot.style.transform = "scale(.001)";
+      dot.style.opacity = "0";
+    }
+  });
+});
+
+// ── 选色（对应 choose(_:)：汇聚 + 变色 + 「今天被染上了。」）──
+function choose(i) {
+  const c = COLORS[i];
+  playNote(c.freq);
+  isExpanded = false;
+  pixel.classList.remove("expanded");
+  hint.classList.remove("show");
+  dots.forEach(dot => {
+    dot.style.transitionDelay = "0s";
+    dot.style.transform = "scale(.001)";
+    dot.style.opacity = "0";
+  });
+  pixel.style.background = c.hex;
+  pixel.style.boxShadow = `0 8px 26px ${c.hex}59`;
+  selectedColor = c;
+
+  revealBlessing();
+}
+
+function revealBlessing() {
+  clearTimeout(blessingTimer);
+  belowText.style.opacity = "0";
+  setTimeout(() => {
+    belowText.textContent = "今天被染上了。";
+    belowText.style.opacity = "1";
+    blessingTimer = setTimeout(() => {
+      belowText.style.opacity = "0";
+      setTimeout(() => {
+        belowText.textContent = "还想塞点什么？";
+        belowText.style.opacity = "1";
+      }, 400);
+    }, 1500);
+  }, 60);
+  bottomSection.classList.add("show");
+}
+
+// ── 四个入口 & 其他 Tab：占位提示 ──
+function showToast(msg) {
+  toast.textContent = msg;
+  toast.classList.add("show");
+  clearTimeout(showToast._t);
+  showToast._t = setTimeout(() => toast.classList.remove("show"), 1600);
+}
+document.querySelectorAll(".entry").forEach(btn => {
+  btn.addEventListener("click", () => showToast("这个功能在后面的里程碑解锁"));
+});
+document.querySelectorAll(".tab[data-toast]").forEach(tab => {
+  tab.addEventListener("click", () => showToast(tab.dataset.toast));
+});
+
+// ── 手机外框自适应缩放 ──
+function fitPhone() {
+  const wrap = document.getElementById("stageWrap");
+  const phone = document.getElementById("phone");
+  const scale = Math.min(1, (window.innerHeight - 140) / 864, (window.innerWidth - 36) / 410);
+  phone.style.transform = `scale(${scale})`;
+  wrap.style.width = 410 * scale + "px";
+  wrap.style.height = 864 * scale + "px";
+}
+window.addEventListener("resize", fitPhone);
+fitPhone();
+</script>
+</body>
+</html>
